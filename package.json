@@ -1,0 +1,1 @@
+{"name":"health-records-static","version":"1.0.0","private":true,"type":"module","scripts":{"build":"esbuild src/main.tsx --bundle --minify --jsx=automatic --target=es2020 --outfile=assets/app.js"},"dependencies":{"react":"19.2.6","react-dom":"19.2.6","zod":"3.25.76"},"devDependencies":{"esbuild":"0.28.0"}}

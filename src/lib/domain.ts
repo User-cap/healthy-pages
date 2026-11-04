@@ -1,0 +1,11 @@
+import {z} from 'zod';
+const num=z.number().finite().min(0).max(100000);
+export const food=z.object({name:z.string().min(1).max(150),grams:num,per100:z.object({kcal:num,protein:num,carbs:num,fat:num,fiber:num}),basis:z.string().min(1).max(1000),proteinSource:z.string().max(100).optional(),fiberSource:z.boolean().default(false)});
+export const payload=z.discriminatedUnion('kind',[
+z.object({kind:z.literal('meal'),meal:z.enum(['早餐','午餐','晚餐','加餐']),foods:z.array(food).min(1).max(50),uncertainty:z.string().max(2000),range:z.tuple([num,num]).optional()}),
+z.object({kind:z.literal('activity'),name:z.string().min(1).max(150),minutes:num,kcal:num,energyType:z.enum(['active','total','basal']),steps:num.optional(),distance:num.optional()}),
+z.object({kind:z.literal('weight'),kg:z.number().min(1).max(500),time:z.string().max(30),originalUnit:z.enum(['kg','斤','lb'])})]);
+export const draft=z.object({date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(s=>!isNaN(Date.parse(s))&&new Date(s).toISOString().slice(0,10)===s),payload,source:z.string().max(300).default('manual'),imageIds:z.array(z.string().uuid()).max(10).default([])});
+export function nutrients(p:any){const n={kcal:0,protein:0,carbs:0,fat:0,fiber:0};if(p.kind==='meal')for(const f of p.foods)for(const k of Object.keys(n) as (keyof typeof n)[])n[k]+=f.grams*f.per100[k]/100;return n;}
+export function summarize(rows:any[]){const n={kcal:0,protein:0,carbs:0,fat:0,fiber:0,activity:0};for(const r of rows.filter(r=>r.status==='confirmed')){const p=r.payload;const a=nutrients(p);for(const k of Object.keys(a) as (keyof typeof a)[])n[k]+=a[k];if(p.kind==='activity'&&p.energyType==='active')n.activity+=p.kcal;}return {...n,difference:n.kcal-n.activity};}
+export function weightSeries(rows:any[]){const days=new Map<string,number[]>();for(const r of rows)if(r.status==='confirmed'&&r.kind==='weight')days.set(r.date,[...(days.get(r.date)||[]),r.payload.kg]);const points=[...days].sort().map(([date,v])=>({date,kg:v.reduce((a,b)=>a+b,0)/v.length}));return points.map(p=>{const v=points.filter(q=>q.date<=p.date&&Date.parse(p.date)-Date.parse(q.date)<7*86400000);return {...p,average:v.reduce((a,b)=>a+b.kg,0)/v.length,count:v.length};});}

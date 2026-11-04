@@ -1,0 +1,30 @@
+{
+  "format": "health-static-v1",
+  "exportedAt": null,
+  "profiles": {
+    "self": {
+      "label": "我",
+      "records": [],
+      "reports": [],
+      "audit": [],
+      "images": {},
+      "completedDays": {},
+      "preferences": {
+        "intakeReference": 1600,
+        "netReference": 1200
+      }
+    },
+    "girlfriend": {
+      "label": "女友",
+      "records": [],
+      "reports": [],
+      "audit": [],
+      "images": {},
+      "completedDays": {},
+      "preferences": {
+        "intakeReference": null,
+        "netReference": null
+      }
+    }
+  }
+}
