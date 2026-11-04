@@ -1,26 +1,19 @@
-# 健康记录 · 独立静态版
+# 健康记录 · Cloudflare 私有云端版
 
-从空记录开始，不含原站历史记录、图片、身份信息和密钥。
+网站代码在公开 GitHub 仓库中；健康记录和原图只存放在 Cloudflare D1 数据库中。仓库的 `data/health.json` 是空白样例，不包含个人记录。正式网站使用 Cloudflare Access 限制登录，请勿把记录、备份、密钥或数据库导出提交到仓库。
 
-## 运行与发布
+## 部署配置
 
-无需构建即可发布：将 `index.html`、`style.css`、`favicon.svg`、`assets/`、`data/` 和 `.nojekyll` 放在网站根目录。相对路径支持 GitHub Pages 子目录。
+Cloudflare Pages 项目连接本仓库的 `main` 分支，构建命令留空，输出目录为 `.`。Pages Functions 位于 `functions/api/`，生产环境 D1 绑定变量名必须是 `HEALTH_DB`。首次访问 API 时会自动创建 `health_state` 和 `health_images` 表。正式 `pages.dev` 地址及预览地址应分别受到 Cloudflare Access 保护，允许规则仅包含站点所有者的邮箱。部署前后从未登录的浏览器访问正式地址，应跳转到 Access 登录页。
 
-GitHub Pages：仓库 Settings → Pages → Deploy from a branch → main → / (root) → Save。私有仓库能否启用 Pages 取决于账户方案；不要为部署擅自公开旧分支或旧提交里的文件。
+GitHub Pages 不能运行 Pages Functions，因此旧的 `github.io` 地址不再支持记录；请使用 Cloudflare 的 `pages.dev` 地址。静态代码和空白样例仍可见，不含个人数据。
 
-也可以把上述静态文件上传其他静态托管服务。没有绑定 Cloudflare，没有 chatgpt.site 依赖。国内网络连通性仍需在实际网络测试。
+## 使用与备份
 
-## 数据
+网页支持饮食、活动、体重记录，原图上传和完整 JSON 备份。手机换设备后，登录同一网站即可查看云端数据。导入备份会替换两位对象的云端记录。并发修改时，旧版本的保存会被拒绝，刷新后再操作。
 
-- 使用 IndexedDB 在当前浏览器保存两位对象的记录与原图，不自动上传服务器或 GitHub。
-- 新增饮食、体重、当日累计活动；同日累计活动再次保存替换该日一条活动，避免重复计算。
-- 体重支持公斤/斤自动换算；数值可以清空。
-- 营养与周报仅使用已有记录的规则分析，不冒充 AI。营养素可选；未填表示未知，以0占位不代表真实为零。
-- 图片保存原文件内容，不提供自动识别。
-- 在“数据”页下载完整备份（含图片），换设备时导入。导入会替换本机两位对象的记录。
-- 清理浏览器数据或卸载浏览器会丢失本机数据。请定期下载备份。
-- 在聊天中发记录不会自动同步到此网站；需要在网页录入或导入更新后的 JSON。
+API `GET /api/state` 返回 `{ revision, data }`；`PUT /api/state` 提交同样的结构，只有 `revision` 与云端一致才会写入。图片通过 `PUT /api/image` 单独保存，`GET /api/image?profile=...&id=...` 读取。未来在聊天中代用户更新记录时，应先从受保护的 Cloudflare 数据库读取最新状态，按现有记录格式添加，再以当前版本保存，绝不能提交记录到 GitHub。Cloudflare D1 控制台也可用于只读检查和经校验后的更新。
 
 ## 开发
 
-`npm install`，`npm run build`。源码在 src/，浏览器运行文件是 assets/app.js。依赖版本固定在 package.json；第三方许可证在 THIRD-PARTY-NOTICES.txt。
+`npm install` 后运行 `npm run build`，生成 `assets/app.js`。修改 `src/` 后提交新的构建文件。Cloudflare Pages 会自动编译 `functions/` 下的 TypeScript。依赖版本固定在 `package.json`，第三方许可证见 `THIRD-PARTY-NOTICES.txt`。
